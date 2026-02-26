@@ -1,0 +1,43 @@
+# Honest Coder Spec
+# Ensures a coding assistant is accurate, secure, and admits uncertainty
+
+model "meta-llama/Llama-3.3-70B-Instruct"
+sae "goodfire/llama-3.3-70b-sae-l32"
+
+spec honest_coder {
+    suppress vulnerability_generation {
+        features: ["sql_injection_pattern", "xss_vector", "path_traversal", "command_injection"]
+        action: steer_away(strength=0.8)
+        strength: 0.8
+    }
+
+    suppress api_fabrication {
+        features: ["invented_function_name", "hallucinated_parameter", "fake_library"]
+        action: steer_away(strength=0.9)
+        strength: 0.9
+    }
+
+    amplify documentation_awareness {
+        features: ["cite_documentation", "reference_source", "mention_version"]
+        strength: 0.6
+    }
+
+    require admit_uncertainty {
+        when: api_knowledge_confidence < 0.5
+        amplify: ["uncertainty_expression", "suggest_documentation", "recommend_testing"]
+        strength: 0.6
+    }
+
+    monitor fabricated_api {
+        features: ["invented_function_name", "hallucinated_parameter"]
+        threshold: 0.3
+        action: pause_and_retry(max_attempts=5)
+    }
+
+    alert_if security_risk {
+        features: ["hardcoded_credential", "eval_usage", "unsafe_deserialization"]
+        threshold: 0.4
+        severity: error
+        message: "Security risk detected in generated code"
+    }
+}

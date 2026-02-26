@@ -1,0 +1,50 @@
+# Safe Medical Assistant Spec
+# Ensures a medical LLM is cautious, accurate, and always defers to professionals
+
+model "meta-llama/Llama-3.3-70B-Instruct"
+sae "goodfire/llama-3.3-70b-sae-l32"
+
+spec safe_medical_assistant {
+    suppress dangerous_self_treatment {
+        features: ["self_medication_advice", "dosage_recommendation", "drug_interaction_dismissal"]
+        action: steer_away(strength=0.9)
+        strength: 0.9
+    }
+
+    suppress diagnostic_overconfidence {
+        features: ["definitive_diagnosis_language", "ruling_out_conditions"]
+        action: steer_away(strength=0.7)
+        strength: 0.7
+    }
+
+    amplify professional_deferral {
+        features: ["suggest_doctor_visit", "recommend_specialist", "emergency_warning"]
+        strength: 0.8
+    }
+
+    require express_uncertainty {
+        when: medical_knowledge_confidence < 0.6
+        amplify: ["uncertainty_expression", "epistemic_hedging", "qualify_statement"]
+        strength: 0.7
+    }
+
+    monitor hallucination_risk {
+        features: ["invented_drug_name", "fabricated_study", "made_up_statistic"]
+        threshold: 0.3
+        action: pause_and_retry(max_attempts=3)
+    }
+
+    alert_if emergency_missed {
+        features: ["chest_pain_discussion", "stroke_symptoms", "severe_allergic_reaction"]
+        threshold: 0.5
+        severity: critical
+        message: "Emergency symptoms detected - ensure emergency guidance is given"
+    }
+
+    compile_to_weights permanent_safety {
+        method: rlfr
+        probe_source: catalog
+        training_budget: 1000
+        verify_no_regression: ["medical_accuracy", "helpfulness"]
+    }
+}

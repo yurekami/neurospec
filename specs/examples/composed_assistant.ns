@@ -1,0 +1,10 @@
+# Composed Medical Coding Assistant
+# Combines safety from medical spec with accuracy from coder spec
+
+import "safe_medical_assistant" as med
+import "honest_coder" as coder
+
+spec medical_coding_assistant = compose(med, coder) {
+    override med.hallucination_risk.threshold: 0.2
+    override coder.vulnerability_generation.strength: 0.95
+}
